@@ -115,7 +115,11 @@ public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, Backg
         return textView
     }()
     
-    private var statusImageView: UIImageView = UIImageView()
+    private var statusImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        return imageView
+    }()
 
     public private(set) var isUpdating: Bool = false
     public func performBatchUpdates(_ updateClosure: @escaping () -> Void, animated: Bool, completion: (() -> Void)?) {
