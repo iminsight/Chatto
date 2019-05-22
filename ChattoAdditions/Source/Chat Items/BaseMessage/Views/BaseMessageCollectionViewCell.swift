@@ -467,30 +467,29 @@ private struct Layout {
             currentX += horizontalMargin
             self.avatarViewFrame.origin.x = currentX
             currentX += avatarSize.width
+            currentX += horizontalInterspacing
+
             if isShowingFailedButton {
-                currentX += horizontalInterspacing
-                self.failedButtonFrame.origin.x = currentX
-                currentX += failedButtonSize.width
-                currentX += horizontalInterspacing
+                self.failedButtonFrame.origin.x = currentX + 2 * horizontalInterspacing + bubbleSize.width
             } else {
-                self.failedButtonFrame.origin.x = currentX - failedButtonSize.width
-                currentX += horizontalInterspacing
+                self.failedButtonFrame.origin.x = currentX + horizontalInterspacing + bubbleSize.width
             }
+
             self.bubbleViewFrame.origin.x = currentX
         } else {
             currentX = containerRect.maxX - horizontalMargin
             currentX -= avatarSize.width
             self.avatarViewFrame.origin.x = currentX
-            if isShowingFailedButton {
-                currentX -= horizontalInterspacing
-                currentX -= failedButtonSize.width
-                self.failedButtonFrame.origin.x = currentX
-                currentX -= horizontalInterspacing
-            } else {
-                self.failedButtonFrame.origin.x = currentX
-                currentX -= horizontalInterspacing
-            }
+            
             currentX -= bubbleSize.width
+            currentX -= horizontalInterspacing
+            
+            if isShowingFailedButton {
+                self.failedButtonFrame.origin.x = currentX - 2 * horizontalInterspacing - failedButtonSize.width
+            } else {
+                self.failedButtonFrame.origin.x = currentX - horizontalInterspacing - failedButtonSize.width
+            }
+            
             self.bubbleViewFrame.origin.x = currentX
         }
 
