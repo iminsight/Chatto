@@ -31,6 +31,8 @@ public protocol TextBubbleViewStyleProtocol {
     func textFont(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIFont
     func textColor(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIColor
     func textInsets(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIEdgeInsets
+    func shouldShowStatus(viewModel: TextMessageViewModelProtocol) -> Bool
+    func bubbleStatusImage(viewModel: TextMessageViewModelProtocol) -> UIImage?
 }
 
 public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, BackgroundSizingQueryable {
@@ -83,6 +85,7 @@ public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, Backg
     private func commonInit() {
         self.addSubview(self.bubbleImageView)
         self.addSubview(self.textView)
+        self.addSubview(self.statusImageView)
     }
 
     private lazy var bubbleImageView: UIImageView = {
@@ -111,6 +114,8 @@ public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, Backg
         textView.textContainer.lineFragmentPadding = 0
         return textView
     }()
+    
+    private var statusImageView: UIImageView = UIImageView()
 
     public private(set) var isUpdating: Bool = false
     public func performBatchUpdates(_ updateClosure: @escaping () -> Void, animated: Bool, completion: (() -> Void)?) {
@@ -142,6 +147,9 @@ public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, Backg
         let borderImage = style.bubbleImageBorder(viewModel: self.textMessageViewModel, isSelected: self.selected)
         if self.bubbleImageView.image != bubbleImage { self.bubbleImageView.image = bubbleImage }
         if self.borderImageView.image != borderImage { self.borderImageView.image = borderImage }
+        
+        let statusImage = style.bubbleStatusImage(viewModel: self.textMessageViewModel)
+        if self.statusImageView.image != statusImage { self.statusImageView.image = statusImage }
     }
 
     private func updateTextView() {
@@ -189,6 +197,7 @@ public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, Backg
         self.textView.bma_rect = layout.textFrame
         self.bubbleImageView.bma_rect = layout.bubbleFrame
         self.borderImageView.bma_rect = self.bubbleImageView.bounds
+        self.statusImageView.bma_rect = layout.statusFrame
     }
 
     public var layoutCache: NSCache<AnyObject, AnyObject>!
@@ -220,6 +229,7 @@ private final class TextBubbleLayoutModel {
     let layoutContext: LayoutContext
     var textFrame: CGRect = CGRect.zero
     var bubbleFrame: CGRect = CGRect.zero
+    var statusFrame: CGRect = CGRect.zero
     var size: CGSize = CGSize.zero
 
     init(layoutContext: LayoutContext) {
@@ -240,6 +250,7 @@ private final class TextBubbleLayoutModel {
         let bubbleSize = textSize.bma_outsetBy(dx: textHorizontalInset, dy: self.layoutContext.textInsets.bma_verticalInset)
         self.bubbleFrame = CGRect(origin: CGPoint.zero, size: bubbleSize)
         self.textFrame = self.bubbleFrame
+        self.statusFrame = CGRect(x: bubbleSize.width - self.layoutContext.textInsets.right + 10, y: bubbleSize.height - self.layoutContext.textInsets.bottom - 5, width: 10, height: 10)
         self.size = bubbleSize
     }
 

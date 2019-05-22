@@ -44,6 +44,18 @@ open class TextMessageCollectionViewCellDefaultStyle: TextMessageCollectionViewC
                 self.outgoingNoTail = outgoingNoTail
         }
     }
+    
+    public struct BubbleStatusImages {
+        let sending: () -> UIImage
+        let success: () -> UIImage
+        
+        public init(
+            sending: @autoclosure @escaping () -> UIImage,
+            success: @autoclosure @escaping () -> UIImage) {
+            self.sending = sending
+            self.success = success
+        }
+    }
 
     public struct TextStyle {
         public let font: () -> UIFont
@@ -66,13 +78,16 @@ open class TextMessageCollectionViewCellDefaultStyle: TextMessageCollectionViewC
     }
 
     public let bubbleImages: BubbleImages
+    public let bubbleStatusImages: BubbleStatusImages
     public let textStyle: TextStyle
     public let baseStyle: BaseMessageCollectionViewCellDefaultStyle
     public init (
         bubbleImages: BubbleImages = TextMessageCollectionViewCellDefaultStyle.createDefaultBubbleImages(),
+        bubbleStatusImages: BubbleStatusImages = TextMessageCollectionViewCellDefaultStyle.createDefaultBubbleStatusImages(),
         textStyle: TextStyle = TextMessageCollectionViewCellDefaultStyle.createDefaultTextStyle(),
         baseStyle: BaseMessageCollectionViewCellDefaultStyle = BaseMessageCollectionViewCellDefaultStyle()) {
             self.bubbleImages = bubbleImages
+            self.bubbleStatusImages = bubbleStatusImages
             self.textStyle = textStyle
             self.baseStyle = baseStyle
     }
@@ -99,7 +114,44 @@ open class TextMessageCollectionViewCellDefaultStyle: TextMessageCollectionViewC
     }
 
     open func textInsets(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIEdgeInsets {
+        if shouldShowStatus(viewModel: viewModel) {
+            return UIEdgeInsets(top: self.textStyle.outgoingInsets.top,
+                                left: self.textStyle.outgoingInsets.left,
+                                bottom: self.textStyle.outgoingInsets.bottom,
+                                right: self.textStyle.outgoingInsets.right + 10.0 + 5.0)
+        }
         return viewModel.isIncoming ? self.textStyle.incomingInsets : self.textStyle.outgoingInsets
+    }
+    
+    open func shouldShowStatus(viewModel: TextMessageViewModelProtocol) -> Bool {
+        let isIncoming = viewModel.messageViewModel.isIncoming
+        let status = viewModel.messageViewModel.status
+
+        guard isIncoming == false else {
+            return false
+        }
+
+        switch status {
+        case .sending, .success:
+            return true
+        case .failed:
+            return false
+        }
+    }
+    
+    open func bubbleStatusImage(viewModel: TextMessageViewModelProtocol) -> UIImage? {
+        guard viewModel.isIncoming == false else {
+            return nil
+        }
+        
+        switch viewModel.status {
+        case .sending:
+            return bubbleStatusImages.sending()
+        case .success:
+            return bubbleStatusImages.success()
+        case .failed:
+            return nil
+        }
     }
 
     open func bubbleImageBorder(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIImage? {
@@ -149,7 +201,7 @@ open class TextMessageCollectionViewCellDefaultStyle: TextMessageCollectionViewC
 
 public extension TextMessageCollectionViewCellDefaultStyle { // Default values
 
-    static public func createDefaultBubbleImages() -> BubbleImages {
+    static func createDefaultBubbleImages() -> BubbleImages {
         return BubbleImages(
             incomingTail: UIImage(named: "bubble-incoming-tail", in: Bundle(for: Class.self), compatibleWith: nil)!,
             incomingNoTail: UIImage(named: "bubble-incoming", in: Bundle(for: Class.self), compatibleWith: nil)!,
@@ -158,7 +210,14 @@ public extension TextMessageCollectionViewCellDefaultStyle { // Default values
         )
     }
 
-    static public func createDefaultTextStyle() -> TextStyle {
+    static func createDefaultBubbleStatusImages() -> BubbleStatusImages {
+        return BubbleStatusImages(
+            sending: UIImage(named: "text-status-sending", in: Bundle(for: Class.self), compatibleWith: nil)!,
+            success: UIImage(named: "text-status-success", in: Bundle(for: Class.self), compatibleWith: nil)!
+        )
+    }
+
+    static func createDefaultTextStyle() -> TextStyle {
         return TextStyle(
             font: UIFont.systemFont(ofSize: 16),
             incomingColor: UIColor.black,
