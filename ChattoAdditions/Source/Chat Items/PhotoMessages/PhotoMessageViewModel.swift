@@ -47,7 +47,7 @@ public protocol PhotoMessageViewModelProtocol: DecoratedMessageViewModelProtocol
 }
 
 open class PhotoMessageViewModel<PhotoMessageModelT: PhotoMessageModelProtocol>: PhotoMessageViewModelProtocol {
-    public var photoMessage: PhotoMessageModelProtocol {
+    public var messageModel: MessageModelProtocol {
         return self._photoMessage
     }
     public let _photoMessage: PhotoMessageModelT // Can't make photoMessage: PhotoMessageModelT: https://gist.github.com/diegosanchezr/5a66c7af862e1117b556
@@ -56,7 +56,7 @@ open class PhotoMessageViewModel<PhotoMessageModelT: PhotoMessageModelProtocol>:
     public var transferDirection: Observable<TransferDirection> = Observable(.download)
     public var image: Observable<UIImage?>
     open var imageSize: CGSize {
-        return self.photoMessage.imageSize
+        return self._photoMessage.imageSize
     }
     public let cellAccessibilityIdentifier = "chatto.message.photo.cell"
     public let bubbleAccessibilityIdentifier = "chatto.message.photo.bubble"
