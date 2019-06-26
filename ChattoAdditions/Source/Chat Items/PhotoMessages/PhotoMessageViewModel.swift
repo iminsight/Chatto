@@ -34,6 +34,7 @@ public enum TransferStatus {
     case transfering
     case failed
     case success
+    case expired
 }
 
 public protocol PhotoMessageViewModelProtocol: DecoratedMessageViewModelProtocol {

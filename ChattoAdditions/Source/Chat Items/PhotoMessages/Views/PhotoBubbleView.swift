@@ -138,7 +138,7 @@ open class PhotoBubbleView: UIView, MaximumLayoutWidthSpecificable, BackgroundSi
         self.progressIndicatorView.setProgress(CGFloat(transferProgress))
 
         switch transferStatus {
-        case .idle, .success, .failed:
+        case .idle, .success, .failed, .expired:
 
             break
         case .transfering:
