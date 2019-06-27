@@ -31,7 +31,7 @@ public enum MessageViewModelStatus {
 }
 
 public extension MessageStatus {
-    public func viewModelStatus() -> MessageViewModelStatus {
+    func viewModelStatus() -> MessageViewModelStatus {
         switch self {
         case .success:
             return MessageViewModelStatus.success
@@ -52,6 +52,7 @@ public protocol MessageViewModelProtocol: class { // why class? https://gist.git
     var date: String { get }
     var status: MessageViewModelStatus { get }
     var avatarImage: Observable<UIImage?> { get set }
+    var topLabelText: String? { get set }
     func willBeShown() // Optional
     func wasHidden() // Optional
 }
@@ -109,9 +110,20 @@ extension DecoratedMessageViewModelProtocol {
             self.messageViewModel.avatarImage = newValue
         }
     }
+    
+    public var topLabelText: String? {
+        get {
+            return self.messageViewModel.topLabelText
+        }
+        set {
+            self.messageViewModel.topLabelText = newValue
+        }
+    }
 }
 
 open class MessageViewModel: MessageViewModelProtocol {
+    public var topLabelText: String?
+    
     open var isIncoming: Bool {
         return self.messageModel.isIncoming
     }
@@ -133,11 +145,13 @@ open class MessageViewModel: MessageViewModelProtocol {
     public init(dateFormatter: DateFormatter,
                 messageModel: MessageModelProtocol,
                 avatarImage: UIImage?,
-                decorationAttributes: BaseMessageDecorationAttributes) {
+                decorationAttributes: BaseMessageDecorationAttributes,
+                topLabelText: String?) {
         self.dateFormatter = dateFormatter
         self.messageModel = messageModel
         self.avatarImage = Observable<UIImage?>(avatarImage)
         self.decorationAttributes = decorationAttributes
+        self.topLabelText = topLabelText
     }
 
     open var isShowingFailedIcon: Bool {
@@ -164,6 +178,7 @@ public class MessageViewModelDefaultBuilder {
         return MessageViewModel(dateFormatter: MessageViewModelDefaultBuilder.dateFormatter,
                                 messageModel: message,
                                 avatarImage: nil,
-                                decorationAttributes: BaseMessageDecorationAttributes())
+                                decorationAttributes: BaseMessageDecorationAttributes(),
+                                topLabelText: nil)
     }
 }

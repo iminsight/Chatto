@@ -31,17 +31,20 @@ public struct BaseMessageDecorationAttributes {
     public let isShowingAvatar: Bool
     public let isShowingSelectionIndicator: Bool
     public let isSelected: Bool
+    public let isShowingTopLabel: Bool
 
     public init(canShowFailedIcon: Bool = true,
                 isShowingTail: Bool = false,
                 isShowingAvatar: Bool = false,
                 isShowingSelectionIndicator: Bool = false,
-                isSelected: Bool = false) {
+                isSelected: Bool = false,
+                isShowingTopLabel: Bool = false) {
         self.canShowFailedIcon = canShowFailedIcon
         self.isShowingTail = isShowingTail
         self.isShowingAvatar = isShowingAvatar
         self.isShowingSelectionIndicator = isShowingSelectionIndicator
         self.isSelected = isSelected
+        self.isShowingTopLabel = isShowingTopLabel
     }
 }
 
@@ -53,22 +56,5 @@ public struct ChatItemDecorationAttributes: ChatItemDecorationAttributesProtocol
                 messageDecorationAttributes: BaseMessageDecorationAttributes) {
         self.bottomMargin = bottomMargin
         self.messageDecorationAttributes = messageDecorationAttributes
-    }
-
-    @available(*, deprecated)
-    public init(bottomMargin: CGFloat,
-                canShowTail: Bool,
-                canShowAvatar: Bool,
-                canShowFailedIcon: Bool,
-                isShowingSelectionIndicator: Bool = false,
-                isSelected: Bool = false) {
-        let messageDecorationAttributes = BaseMessageDecorationAttributes(
-            canShowFailedIcon: canShowFailedIcon,
-            isShowingTail: canShowTail,
-            isShowingAvatar: canShowAvatar,
-            isShowingSelectionIndicator: isShowingSelectionIndicator,
-            isSelected: isSelected
-        )
-        self.init(bottomMargin: bottomMargin, messageDecorationAttributes: messageDecorationAttributes)
     }
 }

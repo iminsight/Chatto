@@ -169,6 +169,7 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         self.bubbleView.isExclusiveTouch = true
         self.bubbleView.addGestureRecognizer(self.tapGestureRecognizer)
         self.bubbleView.addGestureRecognizer(self.longPressGestureRecognizer)
+        self.contentView.addSubview(self.topLabel)
         self.contentView.addSubview(self.avatarView)
         self.contentView.addSubview(self.bubbleView)
         self.contentView.addSubview(self.failedButton)
@@ -199,6 +200,13 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         button.addTarget(self, action: #selector(BaseMessageCollectionViewCell.failedButtonTapped), for: .touchUpInside)
         return button
     }()
+    
+    public private(set) lazy var topLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor.gray
+        label.font = UIFont.systemFont(ofSize: 11)
+        return label
+    }()
 
     // MARK: View model binding
 
@@ -217,6 +225,7 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         self.accessoryTimestampView.attributedText = style.attributedStringForDate(viewModel.date)
         self.updateAvatarView(from: viewModel, with: style)
         self.updateSelectionIndicator(with: style)
+        self.updateTopLabel(from: viewModel, with: style)
 
         self.contentView.isUserInteractionEnabled = !viewModel.decorationAttributes.isShowingSelectionIndicator
         self.selectionTapGestureRecognizer?.isEnabled = viewModel.decorationAttributes.isShowingSelectionIndicator
@@ -234,6 +243,16 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
             self.avatarView.image = viewModel.avatarImage.value
         }
     }
+    
+    private func updateTopLabel(from viewModel: MessageViewModelProtocol,
+                                with style: BaseMessageCollectionViewCellStyleProtocol) {
+        let isShowingTopLabel = viewModel.decorationAttributes.isShowingTopLabel
+        self.topLabel.isHidden = !isShowingTopLabel
+        if isShowingTopLabel {
+            self.topLabel.text = viewModel.topLabelText
+            self.topLabel.textAlignment = viewModel.isIncoming ? .left : .right
+        }
+    }
 
     // MARK: layout
     open override func layoutSubviews() {
@@ -247,6 +266,7 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
 
         self.avatarView.bma_rect = layout.avatarViewFrame
         self.selectionIndicator.bma_rect = layout.selectionIndicatorFrame
+        self.topLabel.bma_rect = layout.topLabelFrame
 
         if self.accessoryTimestampView.superview != nil {
             let layoutConstants = baseStyle.layoutConstants(viewModel: messageViewModel)
@@ -284,7 +304,8 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
             avatarVerticalAlignment: self.baseStyle.avatarVerticalAlignment(viewModel: self.messageViewModel),
             isShowingSelectionIndicator: self.messageViewModel.decorationAttributes.isShowingSelectionIndicator,
             selectionIndicatorSize: self.baseStyle.selectionIndicatorIcon(for: self.messageViewModel).size,
-            selectionIndicatorMargins: self.baseStyle.selectionIndicatorMargins
+            selectionIndicatorMargins: self.baseStyle.selectionIndicatorMargins,
+            isShowingTopLabel: self.messageViewModel.decorationAttributes.isShowingTopLabel
         )
         var layoutModel = Layout()
         layoutModel.calculateLayout(parameters: parameters)
@@ -410,6 +431,7 @@ private struct Layout {
     private (set) var bubbleViewFrame = CGRect.zero
     private (set) var avatarViewFrame = CGRect.zero
     private (set) var selectionIndicatorFrame = CGRect.zero
+    private (set) var topLabelFrame = CGRect.zero
     private (set) var preferredMaxWidthForBubble: CGFloat = 0
 
     mutating func calculateLayout(parameters: LayoutParameters) {
@@ -422,6 +444,7 @@ private struct Layout {
         let horizontalInterspacing = parameters.horizontalInterspacing
         let avatarSize = parameters.avatarSize
         let selectionIndicatorSize = parameters.selectionIndicatorSize
+        let isShowingTopLabel = parameters.isShowingTopLabel
 
         let preferredWidthForBubble = (containerWidth * parameters.maxContainerWidthPercentageForBubbleView).bma_round()
         let bubbleSize = bubbleView.sizeThatFits(CGSize(width: preferredWidthForBubble, height: .greatestFiniteMagnitude))
@@ -450,10 +473,18 @@ private struct Layout {
             xAlignament: .left,
             yAlignment: .center
         )
+        
+        let topLabelSize = CGSize(width: containerWidth * 0.6, height: 15)
+        self.topLabelFrame = topLabelSize.bma_rect(
+            inContainer: containerRect,
+            xAlignament: .center,
+            yAlignment: .top
+        )
 
         // Adjust horizontal positions
 
         var currentX: CGFloat = 0
+        let currentY: CGFloat = isShowingTopLabel ? topLabelSize.height : 0
 
         if parameters.isShowingSelectionIndicator {
             self.selectionIndicatorFrame.origin.x += parameters.selectionIndicatorMargins.left
@@ -475,6 +506,7 @@ private struct Layout {
                 self.failedButtonFrame.origin.x = currentX + horizontalInterspacing + bubbleSize.width
             }
 
+            self.topLabelFrame.origin.x = currentX + horizontalInterspacing
             self.bubbleViewFrame.origin.x = currentX
         } else {
             currentX = containerRect.maxX - horizontalMargin
@@ -490,10 +522,14 @@ private struct Layout {
                 self.failedButtonFrame.origin.x = currentX - horizontalInterspacing - failedButtonSize.width
             }
             
+            self.topLabelFrame.origin.x = currentX
             self.bubbleViewFrame.origin.x = currentX
         }
+        
+        self.bubbleViewFrame.origin.y = currentY
+        self.failedButtonFrame.origin.y += currentY
 
-        self.size = containerRect.size
+        self.size = CGSize(width: containerRect.size.width, height: containerRect.size.height + currentY)
         self.preferredMaxWidthForBubble = preferredWidthForBubble
     }
 }
@@ -512,4 +548,5 @@ private struct LayoutParameters {
     let isShowingSelectionIndicator: Bool
     let selectionIndicatorSize: CGSize
     let selectionIndicatorMargins: UIEdgeInsets
+    let isShowingTopLabel: Bool
 }
