@@ -107,9 +107,6 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
             self.updateViews()
         }
     }
-    private var shouldShowFailedIcon: Bool {
-        return self.messageViewModel?.decorationAttributes.canShowFailedIcon == true && self.messageViewModel?.isShowingFailedIcon == true
-    }
 
     override open var isSelected: Bool {
         didSet {
@@ -215,7 +212,7 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         if self.isUpdating { return }
         guard let viewModel = self.messageViewModel, let style = self.baseStyle else { return }
         self.bubbleView.isUserInteractionEnabled = viewModel.isUserInteractionEnabled
-        if self.shouldShowFailedIcon {
+        if self.messageViewModel.decorationAttributes.canShowFailedIcon {
             self.failedButton.setImage(self.baseStyle.failedIcon, for: .normal)
             self.failedButton.setImage(self.baseStyle.failedIconHighlighted, for: .highlighted)
             self.failedButton.alpha = 1
@@ -298,7 +295,7 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
             maxContainerWidthPercentageForBubbleView: layoutConstants.maxContainerWidthPercentageForBubbleView,
             bubbleView: self.bubbleView,
             isIncoming: self.messageViewModel.isIncoming,
-            isShowingFailedButton: self.shouldShowFailedIcon,
+            isShowingFailedButton: self.messageViewModel.decorationAttributes.canShowFailedIcon,
             failedButtonSize: self.baseStyle.failedIcon.size,
             avatarSize: self.baseStyle.avatarSize(viewModel: self.messageViewModel),
             avatarVerticalAlignment: self.baseStyle.avatarVerticalAlignment(viewModel: self.messageViewModel),
