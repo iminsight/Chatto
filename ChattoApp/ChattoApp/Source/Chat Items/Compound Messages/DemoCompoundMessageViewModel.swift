@@ -24,14 +24,17 @@
 import ChattoAdditions
 
 final class DemoCompoundMessageViewModel: DecoratedMessageViewModelProtocol, DemoMessageViewModelProtocol {
+    var demoMessageModel: DemoMessageModelProtocol
+
+    let messageModel: MessageModelProtocol
 
     init(message: DemoCompoundMessageModel, messageViewModel: MessageViewModelProtocol) {
         self.messageViewModel = messageViewModel
-        self.messageModel = message
+        self.messageModel = message.messageModel
+        self.demoMessageModel = message
     }
 
     let messageViewModel: MessageViewModelProtocol
-    let messageModel: DemoMessageModelProtocol
 }
 
 struct DemoCompoundMessageViewModelBuilder: ViewModelBuilderProtocol {

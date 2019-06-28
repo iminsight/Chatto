@@ -27,7 +27,7 @@ import Chatto
 import ChattoAdditions
 
 public protocol DemoMessageViewModelProtocol {
-    var messageModel: DemoMessageModelProtocol { get }
+    var demoMessageModel: DemoMessageModelProtocol { get }
 }
 
 class BaseMessageHandler {
@@ -41,7 +41,7 @@ class BaseMessageHandler {
     }
     func userDidTapOnFailIcon(viewModel: DemoMessageViewModelProtocol) {
         print("userDidTapOnFailIcon")
-        self.messageSender.sendMessage(viewModel.messageModel)
+        self.messageSender.sendMessage(viewModel.demoMessageModel)
     }
 
     func userDidTapOnAvatar(viewModel: MessageViewModelProtocol) {
@@ -62,11 +62,11 @@ class BaseMessageHandler {
 
     func userDidSelectMessage(viewModel: DemoMessageViewModelProtocol) {
         print("userDidSelectMessage")
-        self.messagesSelector.selectMessage(viewModel.messageModel)
+        self.messagesSelector.selectMessage(viewModel.demoMessageModel)
     }
 
     func userDidDeselectMessage(viewModel: DemoMessageViewModelProtocol) {
         print("userDidDeselectMessage")
-        self.messagesSelector.deselectMessage(viewModel.messageModel)
+        self.messagesSelector.deselectMessage(viewModel.demoMessageModel)
     }
 }

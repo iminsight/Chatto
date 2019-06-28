@@ -67,8 +67,8 @@ class DemoPhotoMessageViewModel: PhotoMessageViewModel<DemoPhotoMessageModel> {
 }
 
 extension DemoPhotoMessageViewModel: DemoMessageViewModelProtocol {
-    var messageModel: DemoMessageModelProtocol {
-        return self._photoMessage
+    var demoMessageModel: DemoMessageModelProtocol {
+        return _photoMessage
     }
 }
 

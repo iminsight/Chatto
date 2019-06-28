@@ -31,7 +31,7 @@ public class DemoTextMessageViewModel: TextMessageViewModel<DemoTextMessageModel
         super.init(textMessage: textMessage, messageViewModel: messageViewModel)
     }
 
-    public var messageModel: DemoMessageModelProtocol {
+    public var demoMessageModel: DemoMessageModelProtocol {
         return self.textMessage
     }
 }
