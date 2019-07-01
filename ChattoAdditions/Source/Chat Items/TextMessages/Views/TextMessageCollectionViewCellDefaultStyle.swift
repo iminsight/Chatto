@@ -61,19 +61,22 @@ open class TextMessageCollectionViewCellDefaultStyle: TextMessageCollectionViewC
         public let font: () -> UIFont
         public let incomingColor: () -> UIColor
         public let outgoingColor: () -> UIColor
+        public let linkTextColor: () -> UIColor
         public let incomingInsets: UIEdgeInsets
         public let outgoingInsets: UIEdgeInsets
         public init(
             font: @autoclosure @escaping () -> UIFont,
             incomingColor: @autoclosure @escaping () -> UIColor,
             outgoingColor: @autoclosure @escaping () -> UIColor,
+            linkTextColor: @autoclosure @escaping () -> UIColor,
             incomingInsets: UIEdgeInsets,
             outgoingInsets: UIEdgeInsets) {
-                self.font = font
-                self.incomingColor = incomingColor
-                self.outgoingColor = outgoingColor
-                self.incomingInsets = incomingInsets
-                self.outgoingInsets = outgoingInsets
+            self.font = font
+            self.incomingColor = incomingColor
+            self.outgoingColor = outgoingColor
+            self.linkTextColor = linkTextColor
+            self.incomingInsets = incomingInsets
+            self.outgoingInsets = outgoingInsets
         }
     }
 
@@ -101,14 +104,19 @@ open class TextMessageCollectionViewCellDefaultStyle: TextMessageCollectionViewC
         ]
     }()
 
-    lazy var font: UIFont = self.textStyle.font()
-    lazy var incomingColor: UIColor = self.textStyle.incomingColor()
-    lazy var outgoingColor: UIColor = self.textStyle.outgoingColor()
+    lazy var font: UIFont = textStyle.font()
+    lazy var incomingColor: UIColor = textStyle.incomingColor()
+    lazy var outgoingColor: UIColor = textStyle.outgoingColor()
+    lazy var linkTextColor = textStyle.linkTextColor()
 
     open func textFont(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIFont {
         return self.font
     }
 
+    open func linkTextColor(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIColor {
+        return linkTextColor
+    }
+    
     open func textColor(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIColor {
         return viewModel.isIncoming ? self.incomingColor : self.outgoingColor
     }
@@ -222,6 +230,7 @@ public extension TextMessageCollectionViewCellDefaultStyle { // Default values
             font: UIFont.systemFont(ofSize: 16),
             incomingColor: UIColor.black,
             outgoingColor: UIColor.white,
+            linkTextColor: UIColor.blue,
             incomingInsets: UIEdgeInsets(top: 10, left: 19, bottom: 10, right: 15),
             outgoingInsets: UIEdgeInsets(top: 10, left: 15, bottom: 10, right: 19)
         )

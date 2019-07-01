@@ -33,6 +33,7 @@ public protocol TextBubbleViewStyleProtocol {
     func textInsets(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIEdgeInsets
     func shouldShowStatus(viewModel: TextMessageViewModelProtocol) -> Bool
     func bubbleStatusImage(viewModel: TextMessageViewModelProtocol) -> UIImage?
+    func linkTextColor(viewModel: TextMessageViewModelProtocol, isSelected: Bool) -> UIColor
 }
 
 public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, BackgroundSizingQueryable {
@@ -159,8 +160,9 @@ public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, Backg
     private func updateTextView() {
         guard let style = self.style, let viewModel = self.textMessageViewModel else { return }
 
-        let font = style.textFont(viewModel: viewModel, isSelected: self.selected)
-        let textColor = style.textColor(viewModel: viewModel, isSelected: self.selected)
+        let font = style.textFont(viewModel: viewModel, isSelected: selected)
+        let textColor = style.textColor(viewModel: viewModel, isSelected: selected)
+        let linkColor = style.linkTextColor(viewModel: viewModel, isSelected: selected)
 
         var needsToUpdateText = false
 
@@ -172,7 +174,7 @@ public final class TextBubbleView: UIView, MaximumLayoutWidthSpecificable, Backg
         if self.textView.textColor != textColor {
             self.textView.textColor = textColor
             self.textView.linkTextAttributes = [
-                NSAttributedString.Key.foregroundColor: textColor,
+                NSAttributedString.Key.foregroundColor: linkColor,
                 NSAttributedString.Key.underlineStyle: NSUnderlineStyle.single.rawValue
             ]
             needsToUpdateText = true
