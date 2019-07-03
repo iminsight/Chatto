@@ -109,7 +109,7 @@ extension BaseChatViewController {
         guard let oldRefRect = oldRefRect, let newRefRect = newRefRect else {
             return
         }
-        let diffY = newRefRect.minY - oldRefRect.minY
+        let diffY = max(newRefRect.minY - oldRefRect.minY, 0)
         collectionView.contentOffset = CGPoint(x: 0, y: collectionView.contentOffset.y + diffY)
     }
 
