@@ -36,19 +36,26 @@ public final class CompoundMessagePresenterBuilder<ViewModelBuilderT, Interactio
         viewModelBuilder: ViewModelBuilderT,
         interactionHandler: InteractionHandlerT?,
         accessibilityIdentifier: String?,
-        contentFactories: [AnyMessageContentFactory<ModelT>]) {
+        contentFactories: [AnyMessageContentFactory<ModelT>],
+        compoundCellStyle: CompoundBubbleViewStyleProtocol = DefaultCompoundBubbleViewStyle(),
+        compoundCellDimensions: CompoundBubbleLayoutProvider.Dimensions,
+        baseCellStyle: BaseMessageCollectionViewCellStyleProtocol = BaseMessageCollectionViewCellDefaultStyle()) {
         self.viewModelBuilder = viewModelBuilder
         self.interactionHandler = interactionHandler
         self.contentFactories = contentFactories
         self.accessibilityIdentifier = accessibilityIdentifier
+        self.compoundCellStyle = compoundCellStyle
+        self.baseCellStyle = baseCellStyle
+        self.compoundCellDimensions = compoundCellDimensions
     }
 
     public let viewModelBuilder: ViewModelBuilderT
     public let interactionHandler: InteractionHandlerT?
     private let contentFactories: [AnyMessageContentFactory<ModelT>]
-    public let sizingCell: CompoundMessageCollectionViewCell = CompoundMessageCollectionViewCell<ModelT>()
-    public lazy var compoundCellStyle: CompoundBubbleViewStyleProtocol = DefaultCompoundBubbleViewStyle()
-    public lazy var baseCellStyle: BaseMessageCollectionViewCellStyleProtocol = BaseMessageCollectionViewCellDefaultStyle()
+    public let sizingCell: CompoundMessageCollectionViewCell = CompoundMessageCollectionViewCell()
+    private let compoundCellStyle: CompoundBubbleViewStyleProtocol
+    private let compoundCellDimensions: CompoundBubbleLayoutProvider.Dimensions
+    private let baseCellStyle: BaseMessageCollectionViewCellStyleProtocol
     private let cache = Cache<CompoundBubbleLayoutProvider.Configuration, CompoundBubbleLayoutProvider>()
     private let accessibilityIdentifier: String?
 
@@ -66,9 +73,9 @@ public final class CompoundMessagePresenterBuilder<ViewModelBuilderT, Interactio
             sizingCell: self.sizingCell,
             baseCellStyle: self.baseCellStyle,
             compoundCellStyle: self.compoundCellStyle,
+            compoundCellDimensions: self.compoundCellDimensions,
             cache: self.cache,
-            accessibilityIdentifier: self.accessibilityIdentifier,
-            menuPresenter: nil
+            accessibilityIdentifier: self.accessibilityIdentifier
         )
     }
 

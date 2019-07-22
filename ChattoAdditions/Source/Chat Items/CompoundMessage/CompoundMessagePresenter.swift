@@ -24,8 +24,8 @@
 import Chatto
 
 @available(iOS 11, *)
-public final class CompoundMessagePresenter<ViewModelBuilderT, InteractionHandlerT>
-    : BaseMessagePresenter<CompoundBubbleView, ViewModelBuilderT, InteractionHandlerT> where
+open class CompoundMessagePresenter<ViewModelBuilderT, InteractionHandlerT>
+    : BaseMessagePresenter<CompoundBubbleView, ViewModelBuilderT, InteractionHandlerT>, MessageContentPresenterDelegate where
     ViewModelBuilderT: ViewModelBuilderProtocol,
     ViewModelBuilderT.ModelT: Equatable,
     InteractionHandlerT: BaseMessageInteractionHandlerProtocol,
@@ -36,28 +36,32 @@ public final class CompoundMessagePresenter<ViewModelBuilderT, InteractionHandle
 
     public let compoundCellStyle: CompoundBubbleViewStyleProtocol
     private let contentFactories: [AnyMessageContentFactory<ModelT>]
-    private lazy var layoutProvider: CompoundBubbleLayoutProvider = self.makeLayoutProvider()
+    private let compoundCellDimensions: CompoundBubbleLayoutProvider.Dimensions
+
     private let cache: Cache<CompoundBubbleLayoutProvider.Configuration, CompoundBubbleLayoutProvider>
     private let accessibilityIdentifier: String?
     private let menuPresenter: ChatItemMenuPresenterProtocol?
+
+    private var contentPresenters: [MessageContentPresenterProtocol] = []
 
     public init(
         messageModel: ModelT,
         viewModelBuilder: ViewModelBuilderT,
         interactionHandler: InteractionHandlerT?,
         contentFactories: [AnyMessageContentFactory<ModelT>],
-        sizingCell: CompoundMessageCollectionViewCell<ModelT>,
+        sizingCell: CompoundMessageCollectionViewCell,
         baseCellStyle: BaseMessageCollectionViewCellStyleProtocol,
         compoundCellStyle: CompoundBubbleViewStyleProtocol,
+        compoundCellDimensions: CompoundBubbleLayoutProvider.Dimensions,
         cache: Cache<CompoundBubbleLayoutProvider.Configuration, CompoundBubbleLayoutProvider>,
-        accessibilityIdentifier: String?,
-        menuPresenter: ChatItemMenuPresenterProtocol?
+        accessibilityIdentifier: String?
     ) {
         self.compoundCellStyle = compoundCellStyle
-        self.contentFactories = contentFactories.filter { $0.canCreateMessageModule(forModel: messageModel) }
+        self.compoundCellDimensions = compoundCellDimensions
+        self.contentFactories = contentFactories.filter { $0.canCreateMessageContent(forModel: messageModel) }
         self.cache = cache
         self.accessibilityIdentifier = accessibilityIdentifier
-        self.menuPresenter = menuPresenter
+        self.menuPresenter = self.contentFactories.lazy.compactMap { $0.createMenuPresenter(forModel: messageModel) }.first
         super.init(
             messageModel: messageModel,
             viewModelBuilder: viewModelBuilder,
@@ -65,62 +69,115 @@ public final class CompoundMessagePresenter<ViewModelBuilderT, InteractionHandle
             sizingCell: sizingCell,
             cellStyle: baseCellStyle
         )
+        self.contentPresenters = self.contentFactories.map { factory in
+            var presenter = factory.createContentPresenter(forModel: self.messageModel)
+            presenter.delegate = self
+            return presenter
+        }
     }
 
-    public override var canCalculateHeightInBackground: Bool {
+    open override var canCalculateHeightInBackground: Bool {
         return true
     }
 
-    public override class func registerCells(_ collectionView: UICollectionView) {
-        collectionView.register(CompoundMessageCollectionViewCell<ModelT>.self,
-                                forCellWithReuseIdentifier: .compoundCellReuseId)
+    open override class func registerCells(_ collectionView: UICollectionView) {
+        // Cell registration is happening lazily, right before the moment when a cell is dequeued.
     }
 
-    public override func dequeueCell(collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
-        return collectionView.dequeueReusableCell(withReuseIdentifier: .compoundCellReuseId,
-                                                  for: indexPath)
+    open override func dequeueCell(collectionView: UICollectionView, indexPath: IndexPath) -> UICollectionViewCell {
+        let cellReuseIdentifier = self.compoundCellReuseId
+        collectionView.register(CompoundMessageCollectionViewCell.self, forCellWithReuseIdentifier: cellReuseIdentifier)
+        return collectionView.dequeueReusableCell(withReuseIdentifier: cellReuseIdentifier, for: indexPath)
     }
 
-    public override func heightForCell(maximumWidth width: CGFloat,
-                                       decorationAttributes: ChatItemDecorationAttributesProtocol?) -> CGFloat {
+    open override func heightForCell(maximumWidth width: CGFloat,
+                                     decorationAttributes: ChatItemDecorationAttributesProtocol?) -> CGFloat {
         let layoutConstants = self.cellStyle.layoutConstants(viewModel: self.messageViewModel)
         let maxWidth = (width * layoutConstants.maxContainerWidthPercentageForBubbleView)
         return self.layoutProvider.layout(forMaxWidth: maxWidth).size.height
     }
 
-    public override func configureCell(_ cell: BaseMessageCollectionViewCell<CompoundBubbleView>,
-                                       decorationAttributes: ChatItemDecorationAttributes,
-                                       animated: Bool,
-                                       additionalConfiguration: (() -> Void)?) {
-        guard let compoundCell = cell as? CompoundMessageCollectionViewCell<ModelT> else {
-            assertionFailure("\(cell) is not CompoundMessageCollectionViewCell<\(ModelT.self)>")
+    open override func configureCell(_ cell: BaseMessageCollectionViewCell<CompoundBubbleView>,
+                                     decorationAttributes: ChatItemDecorationAttributes,
+                                     animated: Bool,
+                                     additionalConfiguration: (() -> Void)?) {
+        guard let compoundCell = cell as? CompoundMessageCollectionViewCell else {
+            assertionFailure("\(cell) is not CompoundMessageCollectionViewCell")
             return
         }
 
         super.configureCell(compoundCell, decorationAttributes: decorationAttributes, animated: animated) { [weak self] in
             defer { additionalConfiguration?() }
             guard let sSelf = self else { return }
-            guard compoundCell.lastAppliedConfiguration != sSelf.messageModel else { return }
-            compoundCell.lastAppliedConfiguration = sSelf.messageModel
-            let modules = sSelf.contentFactories.map { $0.createMessageModule(forModel: sSelf.messageModel) }
+
             let bubbleView = compoundCell.bubbleView!
+
+            if bubbleView.decoratedContentViews == nil {
+                bubbleView.accessibilityIdentifier = sSelf.accessibilityIdentifier
+                bubbleView.decoratedContentViews = zip(sSelf.contentFactories, sSelf.contentPresenters).map { factory, presenter in
+                    return CompoundBubbleView.DecoratedView(view: factory.createContentView(), showBorder: presenter.showBorder)
+                }
+            }
+
             bubbleView.viewModel = sSelf.messageViewModel
-            bubbleView.style = sSelf.compoundCellStyle
-            bubbleView.decoratedContentViews = modules.map { .init(module: $0) }
             bubbleView.layoutProvider = sSelf.layoutProvider
-            bubbleView.accessibilityIdentifier = sSelf.accessibilityIdentifier
+            bubbleView.style = sSelf.compoundCellStyle
+
+            /*
+             There is a current algorithm of binding (and unbinding, as well) compoundCell's views to their presenters:
+             1. Already bound presenters are unbound from views: each presenter is responsible for cleaning up its view.
+             2. All the view references are destroyed to break a connection between compoundCell's views and their previous presenters. These presenters will lose the opportunity to affect compoundCell's views.
+             3. CompoundCell's views bound with a current compound message presenters.
+             */
+
+            sSelf.contentPresenters.forEach { $0.unbindFromView() }
+            compoundCell.viewReferences = zip(sSelf.contentPresenters, bubbleView.decoratedContentViews!.map({ $0.view })).map { presenter, view in
+                let viewReference = ViewReference(to: view)
+                presenter.bindToView(with: viewReference)
+                return viewReference
+            }
         }
     }
 
-    private func makeLayoutProvider() -> CompoundBubbleLayoutProvider {
-        let contentLayoutProviders = self.contentFactories.map { $0.createLayoutProvider(forModel: self.messageModel) }
-        let viewModel = self.messageViewModel
-        let tailWidth = self.compoundCellStyle.tailWidth(forViewModel: viewModel)
-        let configuration = CompoundBubbleLayoutProvider.Configuration(
-            layoutProviders: contentLayoutProviders,
-            tailWidth: tailWidth,
-            isIncoming: viewModel.isIncoming
-        )
+    open override func cellWillBeShown() {
+        super.cellWillBeShown()
+        self.contentPresenters.forEach { $0.contentWillBeShown() }
+    }
+
+    open override func cellWasHidden() {
+        super.cellWasHidden()
+        self.contentPresenters.forEach { $0.contentWasHidden() }
+    }
+
+    open override func onCellBubbleTapped() {
+        super.onCellBubbleTapped()
+        self.contentPresenters.forEach { $0.contentWasTapped_deprecated() }
+    }
+
+    // TODO: Let's think how to improve it.
+    // We have to create a new configuration on each access to a layout provider
+    // because configuration may change at any time. Still, we want to keep
+    // reference to the last configuration to have ability to clean cache
+    // from obsolete and unused objects.
+    private var lastUsedConfiguration: CompoundBubbleLayoutProvider.Configuration?
+    private var layoutProvider: CompoundBubbleLayoutProvider {
+        let configuration: CompoundBubbleLayoutProvider.Configuration = {
+            let contentLayoutProviders = self.contentFactories.map { $0.createLayoutProvider(forModel: self.messageModel) }
+            let viewModel = self.messageViewModel
+            let tailWidth = self.compoundCellStyle.tailWidth(forViewModel: viewModel)
+            return CompoundBubbleLayoutProvider.Configuration(
+                layoutProviders: contentLayoutProviders,
+                tailWidth: tailWidth,
+                isIncoming: viewModel.isIncoming,
+                dimensions: self.compoundCellDimensions
+            )
+        }()
+        defer {
+            if self.lastUsedConfiguration != configuration {
+                self.cleanLayoutCache(for: self.lastUsedConfiguration)
+                self.lastUsedConfiguration = configuration
+            }
+        }
         guard let provider = self.cache[configuration] else {
             let provider = CompoundBubbleLayoutProvider(configuration: configuration)
             self.cache[configuration] = provider
@@ -129,29 +186,30 @@ public final class CompoundMessagePresenter<ViewModelBuilderT, InteractionHandle
         return provider
     }
 
+    private lazy var compoundCellReuseId = "compound-message-[\(self.contentFactories.map { $0.identifier }.joined(separator: "-"))]"
+
     // MARK: - ChatItemMenuPresenterProtocol
 
-    public override func canShowMenu() -> Bool {
+    open override func canShowMenu() -> Bool {
         return self.menuPresenter?.shouldShowMenu() ?? false
     }
 
-    public override func canPerformMenuControllerAction(_ action: Selector) -> Bool {
+    open override func canPerformMenuControllerAction(_ action: Selector) -> Bool {
         return self.menuPresenter?.canPerformMenuControllerAction(action) ?? false
     }
 
-    public override func performMenuControllerAction(_ action: Selector) {
+    open override func performMenuControllerAction(_ action: Selector) {
         self.menuPresenter?.performMenuControllerAction(action)
     }
-}
 
-@available(iOS 11, *)
-private extension CompoundBubbleView.DecoratedView {
-    init(module: MessageContentModule) {
-        self.init(view: module.view,
-                  showBorder: module.showBorder)
+    // MARK: - MessageContentPresenterDelegate
+
+    public func presenterDidInvalidateLayout(_ presenter: MessageContentPresenterProtocol) {
+        self.cleanLayoutCache(for: self.lastUsedConfiguration)
     }
-}
 
-private extension String {
-    static let compoundCellReuseId = "compound-message"
+    private func cleanLayoutCache(for configuration: CompoundBubbleLayoutProvider.Configuration?) {
+        guard let configuration = configuration else { return }
+        self.cache[configuration] = nil
+    }
 }

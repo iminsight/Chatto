@@ -95,9 +95,10 @@ class DemoChatViewController: BaseChatViewController {
                 .init(DemoTextMessageContentFactory()),
                 .init(DemoImageMessageContentFactory()),
                 .init(DemoDateMessageContentFactory())
-            ]
+            ],
+            compoundCellDimensions: .defaultDimensions,
+            baseCellStyle: BaseMessageCollectionViewCellAvatarStyle()
         )
-        compoundPresenterBuilder.baseCellStyle = BaseMessageCollectionViewCellAvatarStyle()
 
         return [
             DemoTextMessageModel.chatItemType: [textMessagePresenter],
@@ -150,5 +151,11 @@ extension DemoChatViewController: MessagesSelectorDelegate {
 
     func messagesSelector(_ messagesSelector: MessagesSelectorProtocol, didDeselectMessage: MessageModelProtocol) {
         self.enqueueModelUpdate(updateType: .normal)
+    }
+}
+
+extension CompoundBubbleLayoutProvider.Dimensions {
+    static var defaultDimensions: CompoundBubbleLayoutProvider.Dimensions {
+        return .init(spacing: 8, contentInsets: UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8))
     }
 }
