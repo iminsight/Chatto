@@ -59,6 +59,7 @@ open class ExpandableTextView: UITextView {
 
     private func commonInit() {
         NotificationCenter.default.addObserver(self, selector: #selector(ExpandableTextView.textDidChange), name: UITextView.textDidChangeNotification, object: self)
+        self.updateBoundsToFitSize()
         self.configurePlaceholder()
         self.updatePlaceholderVisibility()
     }
@@ -109,6 +110,21 @@ open class ExpandableTextView: UITextView {
         }
     }
 
+    override open func closestPosition(to point: CGPoint) -> UITextPosition? {
+        let pointInTextContainer = self.closestPointInTextContainer(to: point)
+        return super.closestPosition(to: pointInTextContainer)
+    }
+
+    override open func closestPosition(to point: CGPoint, within range: UITextRange) -> UITextPosition? {
+        let pointInTextContainer = self.closestPointInTextContainer(to: point)
+        return super.closestPosition(to: pointInTextContainer, within: range)
+    }
+
+    override open func characterRange(at point: CGPoint) -> UITextRange? {
+        let pointInTextContainer = self.closestPointInTextContainer(to: point)
+        return super.characterRange(at: pointInTextContainer)
+    }
+
     @available(*, deprecated, message: "use placeholderText property instead")
     open func setTextPlaceholder(_ textPlaceholder: String) {
         self.placeholder.text = textPlaceholder
@@ -127,6 +143,7 @@ open class ExpandableTextView: UITextView {
     }
 
     @objc func textDidChange() {
+        self.updateBoundsToFitSize()
         self.updatePlaceholderVisibility()
         self.scrollToCaret()
 
@@ -158,6 +175,22 @@ open class ExpandableTextView: UITextView {
     }
 
     // MARK: - Private methods
+
+    private func updateBoundsToFitSize() {
+        guard #available(iOS 13.0, *) else { return }
+
+        /*
+         Since iOS 13 Beta 4, changing a text doesn't cause a recalculation of the content size.
+         Because of this, invalidateIntrinsicContentSize is not called, and layout is not updated.
+         To fix it, updateBoundsToFitSize should be called on each text change.
+
+         Analyzing a stack trace:
+         -[_UITextContainerView setConstrainedFrameSize:] is still called.
+         -[_UITextContainerView setFrame:] is NOT called since iOS 13 Beta 4.
+         */
+
+        self.bounds.size = self.sizeThatFits(self.bounds.size)
+    }
 
     private func scrollToCaret() {
         if let textRange = self.selectedTextRange {
@@ -206,5 +239,13 @@ open class ExpandableTextView: UITextView {
         self.placeholder.textAlignment = self.textAlignment
         self.placeholder.textContainerInset = self.textContainerInset
         self.placeholder.backgroundColor = UIColor.clear
+    }
+
+    // When you press on inset area inside UITextView, cursor is automatically moved to beginning of the content.
+    // We move press point to the closest point inside text container to avoid this behaviour.
+    // Point that is already inside text container or outside of the view itself will not be moved.
+    private func closestPointInTextContainer(to point: CGPoint) -> CGPoint {
+        guard self.bounds.contains(point) else { return point }
+        return point.clamped(to: self.bounds.inset(by: self.textContainerInset))
     }
 }
