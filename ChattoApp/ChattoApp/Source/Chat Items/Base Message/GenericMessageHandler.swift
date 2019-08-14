@@ -24,6 +24,9 @@
 import ChattoAdditions
 
 final class GenericMessageHandler<ViewModel: DemoMessageViewModelProtocol & MessageViewModelProtocol>: BaseMessageInteractionHandlerProtocol {
+    func messageWillBeShown(viewModel: ViewModel) {
+        
+    }
 
     private let baseHandler: BaseMessageHandler
 
