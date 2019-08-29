@@ -385,6 +385,10 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
         assert(false, "Override in subclass")
         return UIView()
     }
+    
+    open func loadMoreContentIfNeeded() {
+        assert(false, "Override in subclass")
+    }
 
     /**
         When paginating up we need to change the scroll position as the content is pushed down.

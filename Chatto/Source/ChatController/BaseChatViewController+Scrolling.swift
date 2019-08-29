@@ -164,7 +164,9 @@ extension BaseChatViewController {
 
     public func autoLoadMoreContentIfNeeded() {
         guard self.autoLoadingEnabled, let dataSource = self.chatDataSource else { return }
-
+        
+        self.loadMoreContentIfNeeded()
+        
         if self.isCloseToTop() && dataSource.hasMorePrevious {
             dataSource.loadPrevious()
         } else if self.isCloseToBottom() && dataSource.hasMoreNext {
