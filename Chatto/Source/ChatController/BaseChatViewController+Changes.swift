@@ -254,14 +254,15 @@ extension BaseChatViewController {
         let updateType = self.isFirstLayout ? .firstLoad : updateType
         let performInBackground = updateType != .firstLoad
 
-        self.autoLoadingEnabled = false
+        self.isLoading = true
         let perfomBatchUpdates: (_ changes: CollectionChanges, _ updateModelClosure: @escaping () -> Void) -> Void  = { [weak self] (changes, updateModelClosure) in
             self?.performBatchUpdates(
                 updateModelClosure: updateModelClosure,
                 changes: changes,
                 updateType: updateType,
                 completion: { () -> Void in
-                    self?.autoLoadingEnabled = true
+//                    self?.autoLoadingEnabled = true
+                    self?.isLoading = false
                     completion()
             })
         }

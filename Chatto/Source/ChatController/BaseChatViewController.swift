@@ -343,7 +343,8 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
         return collectionView.collectionViewLayout.layoutAttributesForItem(at: indexPath)?.frame
     }
 
-    var autoLoadingEnabled: Bool = false
+    public var autoLoadingEnabled: Bool = false
+    public internal(set) var isLoading: Bool = false
     var accessoryViewRevealer: AccessoryViewRevealer!
     public private(set) var inputBarContainer: UIView!
     public private(set) var inputContentContainer: UIView!
