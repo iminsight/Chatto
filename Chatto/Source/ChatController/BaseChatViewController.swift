@@ -402,8 +402,8 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
 
     // MARK: ChatDataSourceDelegateProtocol
 
-    open func chatDataSourceDidUpdate(_ chatDataSource: ChatDataSourceProtocol, updateType: UpdateType) {
-        self.enqueueModelUpdate(updateType: updateType)
+    open func chatDataSourceDidUpdate(_ chatDataSource: ChatDataSourceProtocol, updateType: UpdateType = .normal, completion: (() -> Void)? = nil) {
+        self.enqueueModelUpdate(updateType: updateType, completion: completion)
     }
 
     open func chatDataSourceDidUpdate(_ chatDataSource: ChatDataSourceProtocol) {
