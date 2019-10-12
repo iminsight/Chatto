@@ -68,13 +68,13 @@ class DemoChatDataSource: ChatDataSourceProtocol {
     func loadNext() {
         self.slidingWindow.loadNext()
         self.slidingWindow.adjustWindow(focusPosition: 1, maxWindowSize: self.preferredMaxWindowSize)
-        self.delegate?.chatDataSourceDidUpdate(self, updateType: .pagination)
+        self.delegate?.chatDataSourceDidUpdate(self, updateType: .pagination, completion: nil)
     }
 
     func loadPrevious() {
         self.slidingWindow.loadPrevious()
         self.slidingWindow.adjustWindow(focusPosition: 0, maxWindowSize: self.preferredMaxWindowSize)
-        self.delegate?.chatDataSourceDidUpdate(self, updateType: .pagination)
+        self.delegate?.chatDataSourceDidUpdate(self, updateType: .pagination, completion: nil)
     }
 
     func addTextMessage(_ text: String) {

@@ -388,7 +388,7 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
     }
     
     open func loadMoreContentIfNeeded() {
-        assert(false, "Override in subclass")
+//        assert(false, "Override in subclass")
     }
 
     /**
