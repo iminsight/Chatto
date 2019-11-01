@@ -161,9 +161,19 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         return tapGestureRecognizer
     }()
 
+    public private (set) lazy var avatarLongPressGestureRecognizer: UILongPressGestureRecognizer = {
+        let longpressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(BaseMessageCollectionViewCell.avatarLongPressed(_:)))
+        longpressGestureRecognizer.cancelsTouchesInView = true
+//        longpressGestureRecognizer.delegate = self
+        return longpressGestureRecognizer
+    }()
+
     private func commonInit() {
         self.avatarView = self.createAvatarView()
+        self.avatarView.isExclusiveTouch = true
         self.avatarView.addGestureRecognizer(self.avatarTapGestureRecognizer)
+        self.avatarView.addGestureRecognizer(self.avatarLongPressGestureRecognizer)
+        self.avatarTapGestureRecognizer.require(toFail: self.avatarLongPressGestureRecognizer)
         self.bubbleView = self.createBubbleView()
         self.bubbleView.isExclusiveTouch = true
         self.bubbleView.addGestureRecognizer(self.tapGestureRecognizer)
@@ -184,19 +194,21 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
     }
 
     open func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        return self.bubbleView.bounds.contains(touch.location(in: self.bubbleView))
+        return self.bubbleView.bounds.contains(touch.location(in: self.bubbleView)) || self.avatarView.bounds.contains(touch.location(in: self.avatarView))
     }
 
     open func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        let allowLongPressGestureRecognizerToBeRecognizedWithAnyOtherGestureRecognizersExceptTapGestures = gestureRecognizer === self.longPressGestureRecognizer && !(otherGestureRecognizer is UITapGestureRecognizer)
-        let allowTapGestureRecognizerToBeRecognizedWithOtherTapGestures = gestureRecognizer === self.tapGestureRecognizer && otherGestureRecognizer is UITapGestureRecognizer
+        let allowLongPressGestureRecognizerToBeRecognizedWithAnyOtherGestureRecognizersExceptTapGestures =
+            (gestureRecognizer === self.longPressGestureRecognizer || gestureRecognizer === self.avatarLongPressGestureRecognizer) && !(otherGestureRecognizer is UITapGestureRecognizer)
+        let allowTapGestureRecognizerToBeRecognizedWithOtherTapGestures =
+            (gestureRecognizer === self.tapGestureRecognizer || gestureRecognizer === self.avatarTapGestureRecognizer) && otherGestureRecognizer is UITapGestureRecognizer
         return allowLongPressGestureRecognizerToBeRecognizedWithAnyOtherGestureRecognizersExceptTapGestures
             || allowTapGestureRecognizerToBeRecognizedWithOtherTapGestures
     }
 
     public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         if gestureRecognizer is UITapGestureRecognizer {
-            let allowTapGesturestToWaitUntilLongPressGesturesFail = otherGestureRecognizer == self.longPressGestureRecognizer
+            let allowTapGesturestToWaitUntilLongPressGesturesFail = otherGestureRecognizer == self.longPressGestureRecognizer || otherGestureRecognizer == self.avatarLongPressGestureRecognizer
             return allowTapGesturestToWaitUntilLongPressGesturesFail
         }
 
@@ -204,7 +216,7 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
             return false
         }
 
-        let allowLongPressGestureToWaitUntilOtherLongPressGesturesWithSingleTouchFail = gestureRecognizer == self.longPressGestureRecognizer && otherLongPressGestureRecognizer.numberOfTouchesRequired == 1
+        let allowLongPressGestureToWaitUntilOtherLongPressGesturesWithSingleTouchFail = ((gestureRecognizer == self.longPressGestureRecognizer || gestureRecognizer == self.avatarLongPressGestureRecognizer)) && otherLongPressGestureRecognizer.numberOfTouchesRequired == 1
         return allowLongPressGestureToWaitUntilOtherLongPressGesturesWithSingleTouchFail
     }
 
@@ -420,6 +432,20 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
     @objc
     func avatarTapped(_ tapGestureRecognizer: UITapGestureRecognizer) {
         self.onAvatarTapped?(self)
+    }
+    
+    public var onAvatarLongPressBegan: ((_ cell: BaseMessageCollectionViewCell) -> Void)?
+    public var onAvatarLongPressEnded: ((_ cell: BaseMessageCollectionViewCell) -> Void)?
+    @objc
+    private func avatarLongPressed(_ longPressGestureRecognizer: UILongPressGestureRecognizer) {
+        switch longPressGestureRecognizer.state {
+        case .began:
+            self.onAvatarLongPressBegan?(self)
+        case .ended, .cancelled:
+            self.onAvatarLongPressEnded?(self)
+        default:
+            break
+        }
     }
 
     public var onBubbleTapped: ((_ cell: BaseMessageCollectionViewCell) -> Void)?

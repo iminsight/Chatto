@@ -39,6 +39,8 @@ public protocol BaseMessageInteractionHandlerProtocol {
     func userDidTapOnBubble(viewModel: ViewModelT)
     func userDidBeginLongPressOnBubble(viewModel: ViewModelT)
     func userDidEndLongPressOnBubble(viewModel: ViewModelT)
+    func userDidBeginLongPressOnAvatar(viewModel: ViewModelT)
+    func userDidEndLongPressOnAvatar(viewModel: ViewModelT)
     func userDidSelectMessage(viewModel: ViewModelT)
     func userDidDeselectMessage(viewModel: ViewModelT)
     func messageWillBeShown(viewModel: ViewModelT)
@@ -140,6 +142,14 @@ open class BaseMessagePresenter<BubbleViewT, ViewModelBuilderT, InteractionHandl
                 guard let sSelf = self else { return }
                 sSelf.onCellAvatarTapped()
             }
+            cell.onAvatarLongPressBegan = { [weak self] (cell) in
+                guard let sSelf = self else { return }
+                sSelf.onCellAvatarLongPressBegan()
+            }
+            cell.onAvatarLongPressEnded = { [weak self] (cell) in
+                guard let sSelf = self else { return }
+                sSelf.onCellAvatarLongPressEnded()
+            }
             cell.onFailedButtonTapped = { [weak self] (cell) in
                 guard let sSelf = self else { return }
                 sSelf.onCellFailedButtonTapped(cell.failedButton)
@@ -217,6 +227,14 @@ open class BaseMessagePresenter<BubbleViewT, ViewModelBuilderT, InteractionHandl
 
     open func onCellAvatarTapped() {
         self.interactionHandler?.userDidTapOnAvatar(viewModel: self.messageViewModel)
+    }
+    
+    open func onCellAvatarLongPressBegan() {
+        self.interactionHandler?.userDidBeginLongPressOnAvatar(viewModel: self.messageViewModel)
+    }
+
+    open func onCellAvatarLongPressEnded() {
+        self.interactionHandler?.userDidEndLongPressOnAvatar(viewModel: self.messageViewModel)
     }
 
     open func onCellFailedButtonTapped(_ failedButtonView: UIView) {
