@@ -139,12 +139,12 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
 
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.keyboardTracker.startTracking()
+        self.keyboardTracker?.startTracking()
     }
 
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.keyboardTracker.stopTracking()
+        self.keyboardTracker?.stopTracking()
     }
 
     private func addCollectionView() {
@@ -182,7 +182,7 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
     var onAllBatchUpdatesFinished: (() -> Void)?
 
     var inputContainerBottomConstraint: NSLayoutConstraint!
-    private func addInputBarContainer() {
+    open func addInputBarContainer() {
         self.inputBarContainer = UIView(frame: CGRect.zero)
         self.inputBarContainer.autoresizingMask = UIView.AutoresizingMask()
         self.inputBarContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -195,7 +195,7 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
         self.view.addConstraint(self.inputContainerBottomConstraint)
     }
 
-    private func addInputView() {
+    open func addInputView() {
         let inputView = self.createChatInputView()
         self.inputBarContainer.addSubview(inputView)
         self.inputBarContainer.addConstraint(NSLayoutConstraint(item: self.inputBarContainer, attribute: .top, relatedBy: .equal, toItem: inputView, attribute: .top, multiplier: 1, constant: 0))
@@ -204,7 +204,7 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
         self.inputBarContainer.addConstraint(NSLayoutConstraint(item: self.inputBarContainer, attribute: .trailing, relatedBy: .equal, toItem: inputView, attribute: .trailing, multiplier: 1, constant: 0))
     }
 
-    private func addInputContentContainer() {
+    open func addInputContentContainer() {
         self.inputContentContainer = UIView(frame: CGRect.zero)
         self.inputContentContainer.autoresizingMask = UIView.AutoresizingMask()
         self.inputContentContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -269,15 +269,19 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
     }
 
     var notificationCenter = NotificationCenter.default
-    var keyboardTracker: KeyboardTracker!
+    var keyboardTracker: KeyboardTracker?
 
-    public private(set) var isFirstLayout: Bool = true
+    public var isFirstLayout: Bool = true
     override open func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
         self.adjustCollectionViewInsets(shouldUpdateContentOffset: true)
-        self.keyboardTracker.adjustTrackingViewSizeIfNeeded()
+        self.keyboardTracker?.adjustTrackingViewSizeIfNeeded()
 
+        self.firstLayoutSubviews()
+    }
+    
+    open func firstLayoutSubviews() {
         if self.isFirstLayout {
             self.updateQueue.start()
             self.isFirstLayout = false
@@ -375,7 +379,7 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
     public var autoLoadingEnabled: Bool = false
     public internal(set) var isLoading: Bool = false
     var accessoryViewRevealer: AccessoryViewRevealer!
-    public private(set) var inputBarContainer: UIView!
+    public var inputBarContainer: UIView!
     public private(set) var inputContentContainer: UIView!
     public internal(set) var presenterFactory: ChatItemPresenterFactoryProtocol!
     let presentersByCell = NSMapTable<UICollectionViewCell, AnyObject>(keyOptions: .weakMemory, valueOptions: .weakMemory)
@@ -440,7 +444,7 @@ open class BaseChatViewController: UIViewController, UICollectionViewDataSource,
     }
 
     public var keyboardStatus: KeyboardStatus {
-        return self.keyboardTracker.keyboardStatus
+        return self.keyboardTracker?.keyboardStatus ?? .hidden
     }
 
     public var maximumInputSize: CGSize {
