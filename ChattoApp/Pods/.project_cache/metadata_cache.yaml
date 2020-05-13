@@ -1,0 +1,12 @@
+Chatto:
+  LABEL: Chatto
+  PROJECT_PATH: Chatto.xcodeproj
+  UUID: FDB92C628F6D291888ECD08F2AC59D7D
+ChattoAdditions:
+  LABEL: ChattoAdditions
+  PROJECT_PATH: ChattoAdditions.xcodeproj
+  UUID: 62B960A26E9EBDE9DC604EA69D45EEEA
+Pods-ChattoApp:
+  LABEL: Pods-ChattoApp
+  PROJECT_PATH: Pods.xcodeproj
+  UUID: B3A80E083011B2BEB0DBECEE9019EEBA

@@ -189,6 +189,8 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         self.contentView.addSubview(self.selectionIndicator)
         self.contentView.isExclusiveTouch = true
         self.isExclusiveTouch = true
+        
+        self.avatarView.addSubview(self.levelLabel)
 
         let selectionTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleSelectionTap(_:)))
         self.selectionTapGestureRecognizer = selectionTapGestureRecognizer
@@ -239,6 +241,44 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         label.font = UIFont.systemFont(ofSize: 11)
         return label
     }()
+    
+    public private(set) lazy var levelLabel: UILabel = {
+        let label = InsetLabel()
+        label.textAlignment = .center
+        label.backgroundColor = UIColor(red: 0.933, green: 0.690, blue: 0.145, alpha: 1)
+        label.textColor = .white
+        label.font = UIFont.systemFont(ofSize: 8)
+        label.contentInset = UIEdgeInsets(top: 1, left: 1, bottom: 1, right: 1)
+        label.adjustsFontSizeToFitWidth = true
+        label.layer.cornerRadius = 8
+        label.layer.masksToBounds = true
+        return label
+    }()
+    
+    private class InsetLabel: UILabel {
+
+        var contentInset = UIEdgeInsets(top: 1, left: 6, bottom: 1, right: 6) {
+            didSet {
+                invertedContentInset = UIEdgeInsets(top: -contentInset.top,
+                                                    left: -contentInset.left,
+                                                    bottom: -contentInset.bottom,
+                                                    right: -contentInset.right)
+                invalidateIntrinsicContentSize()
+            }
+        }
+        
+        private var invertedContentInset = UIEdgeInsets(top: -1, left: -6, bottom: -1, right: -6)
+
+        override func textRect(forBounds bounds: CGRect, limitedToNumberOfLines numberOfLines: Int) -> CGRect {
+            let layoutBounds = bounds.inset(by: contentInset)
+            let textRect = super.textRect(forBounds: layoutBounds, limitedToNumberOfLines: numberOfLines)
+            return textRect.inset(by: invertedContentInset)
+        }
+        
+        override func drawText(in rect: CGRect) {
+            super.drawText(in: rect.inset(by: contentInset))
+        }
+    }
 
     // MARK: View model binding
 
@@ -257,6 +297,7 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         self.accessoryTimestampView.attributedText = style.attributedStringForDate(viewModel.date)
         self.updateSelectionIndicator(with: style)
         self.updateTopLabel(from: viewModel, with: style)
+        self.updateLevelLabel(from: viewModel, with: style)
 
         self.contentView.isUserInteractionEnabled = !viewModel.decorationAttributes.isShowingSelectionIndicator
         self.selectionTapGestureRecognizer?.isEnabled = viewModel.decorationAttributes.isShowingSelectionIndicator
@@ -285,6 +326,21 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
             self.topLabel.textAlignment = viewModel.isIncoming ? .left : .right
         }
     }
+    
+    private func updateLevelLabel(from viewModel: MessageViewModelProtocol,
+                                with style: BaseMessageCollectionViewCellStyleProtocol) {
+        let isNotEmpty: Bool = {
+            guard let levelLabelText = viewModel.levelLabelText else {
+                return false
+            }
+            return levelLabelText.count > 0
+        }()
+        let isShowingLevel = viewModel.decorationAttributes.isShowingLevel && isNotEmpty
+        self.levelLabel.isHidden = !isShowingLevel
+        if isShowingLevel {
+            self.levelLabel.text = viewModel.levelLabelText
+        }
+    }
 
     // MARK: layout
     open override func layoutSubviews() {
@@ -297,6 +353,7 @@ open class BaseMessageCollectionViewCell<BubbleViewType>: UICollectionViewCell, 
         self.bubbleView.layoutIfNeeded()
 
         self.avatarView.bma_rect = layout.avatarViewFrame
+        self.levelLabel.bma_rect = layout.levelLabelFrame
         self.selectionIndicator.bma_rect = layout.selectionIndicatorFrame
         self.topLabel.bma_rect = layout.topLabelFrame
 
@@ -476,6 +533,7 @@ private struct Layout {
     private (set) var failedButtonFrame = CGRect.zero
     private (set) var bubbleViewFrame = CGRect.zero
     private (set) var avatarViewFrame = CGRect.zero
+    private (set) var levelLabelFrame = CGRect.zero
     private (set) var selectionIndicatorFrame = CGRect.zero
     private (set) var topLabelFrame = CGRect.zero
     private (set) var preferredMaxWidthForBubble: CGFloat = 0
@@ -513,6 +571,11 @@ private struct Layout {
             xAlignament: .center,
             yAlignment: parameters.avatarVerticalAlignment
         )
+        
+        let levelSize = CGSize(width: 16, height: 16)
+        self.levelLabelFrame = levelSize.bma_rect(inContainer: avatarViewFrame,
+                                                  xAlignament: .right,
+                                                  yAlignment: .bottom).offsetBy(dx: 4, dy: 4)
 
         self.selectionIndicatorFrame = selectionIndicatorSize.bma_rect(
             inContainer: containerRect,

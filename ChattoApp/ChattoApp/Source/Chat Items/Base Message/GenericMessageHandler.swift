@@ -24,6 +24,15 @@
 import ChattoAdditions
 
 final class GenericMessageHandler<ViewModel: DemoMessageViewModelProtocol & MessageViewModelProtocol>: BaseMessageInteractionHandlerProtocol {
+    
+    func userDidBeginLongPressOnAvatar(viewModel: ViewModel) {
+        
+    }
+    
+    func userDidEndLongPressOnAvatar(viewModel: ViewModel) {
+        
+    }
+    
     func messageWillBeShown(viewModel: ViewModel) {
         
     }

@@ -53,6 +53,7 @@ public protocol MessageViewModelProtocol: class { // why class? https://gist.git
     var status: MessageViewModelStatus { get }
     var avatarImage: Observable<UIImage?> { get set }
     var topLabelText: String? { get set }
+    var levelLabelText: String? { get set }
     func willBeShown() // Optional
     func wasHidden() // Optional
 }
@@ -119,10 +120,21 @@ extension DecoratedMessageViewModelProtocol {
             self.messageViewModel.topLabelText = newValue
         }
     }
+    
+    public var levelLabelText: String? {
+        get {
+            return self.messageViewModel.levelLabelText
+        }
+        set {
+            self.messageViewModel.levelLabelText = newValue
+        }
+    }
 }
 
 open class MessageViewModel: MessageViewModelProtocol {
+    
     public var topLabelText: String?
+    public var levelLabelText: String?
     
     open var isIncoming: Bool {
         return self.messageModel.isIncoming
@@ -146,12 +158,14 @@ open class MessageViewModel: MessageViewModelProtocol {
                 messageModel: MessageModelProtocol,
                 avatarImage: UIImage?,
                 decorationAttributes: BaseMessageDecorationAttributes,
-                topLabelText: String?) {
+                topLabelText: String?,
+                levelLabelText: String?) {
         self.dateFormatter = dateFormatter
         self.messageModel = messageModel
         self.avatarImage = Observable<UIImage?>(avatarImage)
         self.decorationAttributes = decorationAttributes
         self.topLabelText = topLabelText
+        self.levelLabelText = levelLabelText
     }
 
     open var isShowingFailedIcon: Bool {
@@ -179,6 +193,7 @@ public class MessageViewModelDefaultBuilder {
                                 messageModel: message,
                                 avatarImage: nil,
                                 decorationAttributes: BaseMessageDecorationAttributes(),
-                                topLabelText: nil)
+                                topLabelText: nil,
+                                levelLabelText: "V10")
     }
 }
